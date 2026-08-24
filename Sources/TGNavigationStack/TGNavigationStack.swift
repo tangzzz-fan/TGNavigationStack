@@ -21,42 +21,33 @@ public struct TGNavigationStack<Route: TGRoute, Root: View, Destination: View>: 
     }
 
     public var body: some View {
-        NavigationStack(
-            path: Binding(
-                get: { state.path },
-                set: { dispatch(.setPath($0)) }
-            )
-        ) {
+        NavigationStack(path: pathBinding) {
             root()
                 .navigationDestination(for: Route.self) { route in
                     destination(route)
                 }
         }
-        .sheet(
-            item: Binding(
-                get: { state.presentationStyle == .sheet ? state.presentedRoute : nil },
-                set: {
-                    if $0 == nil {
-                        dispatch(.dismiss)
-                    }
-                }
-            )
-        ) { route in
+        .sheet(item: presentedBinding(matching: .sheet)) { route in
             destination(route)
         }
         #if os(iOS) || os(tvOS)
-        .fullScreenCover(
-            item: Binding(
-                get: { state.presentationStyle == .fullScreenCover ? state.presentedRoute : nil },
-                set: {
-                    if $0 == nil {
-                        dispatch(.dismiss)
-                    }
-                }
-            )
-        ) { route in
+        .fullScreenCover(item: presentedBinding(matching: .fullScreenCover)) { route in
             destination(route)
         }
         #endif
+    }
+
+    private var pathBinding: Binding<[Route]> {
+        Binding(
+            get: { state.path },
+            set: { dispatch(.setPath($0)) }
+        )
+    }
+
+    private func presentedBinding(matching style: PresentationStyle) -> Binding<Route?> {
+        Binding(
+            get: { state.presentationStyle == style ? state.presentedRoute : nil },
+            set: { if $0 == nil { dispatch(.dismiss) } }
+        )
     }
 }

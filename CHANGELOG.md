@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **`TGRoute` identity**: default `id` is the route value (`Self`), not `hashValue`. Avoids collision-based identity bugs in `sheet(item:)` / `fullScreenCover(item:)`.
+- **`navigationReducer`**: no longer `@MainActor`. Pure state transition; UI `dispatch` remains main-actor isolated.
+
+### Added
+- Architecture and Swift 6 readiness docs (`docs/architecture.md`, `docs/swift6-readiness.md`).
+- Reducer edge-case tests (empty pop, popToRoot, default sheet, present overwrite, idempotent dismiss).
+- Route identity tests.
+
 ## [1.0.0] - 2026-08-25
 
 ### Added
