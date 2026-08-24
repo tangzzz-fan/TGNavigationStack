@@ -15,7 +15,12 @@
 ## Requirements
 
 - Swift 6.0+
-- iOS 17 / macOS 14 / tvOS 17 / watchOS 10
+- **iOS 17+** / macOS 14+ / tvOS 17+ / watchOS 10+
+
+## Documentation
+
+- [架构设计](./docs/architecture.md) — 系统 Navigation 方案、槽点、本库分层与边界
+- [Swift 6+ 就绪性审核](./docs/swift6-readiness.md) — 并发与正确性修正建议
 
 ## Installation
 
@@ -55,7 +60,6 @@ enum AppAction {
     case navigation(NavigationAction<AppRoute>)
 }
 
-@MainActor
 func reducer(state: inout AppState, action: AppAction) {
     switch action {
     case .navigation(let navAction):

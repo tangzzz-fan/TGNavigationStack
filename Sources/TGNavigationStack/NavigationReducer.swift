@@ -1,7 +1,10 @@
 import Foundation
 
 /// Updates navigation state based on the provided action.
-@MainActor
+///
+/// Pure state transition: not MainActor-isolated. Call it from whatever
+/// isolation your store uses. UI dispatch from `TGNavigationStack` stays on
+/// the main actor.
 public func navigationReducer<Route: TGRoute>(
     state: inout NavigationState<Route>,
     action: NavigationAction<Route>
