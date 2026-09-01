@@ -133,6 +133,7 @@ Destination 必须挂在能「看到」该 value 的层级。挂错（例如只�
 - 系统手势导致的 path 变化与 modal dismiss，**一律**变成 `NavigationAction`，由 reducer 写回 `NavigationState`。
 - View 不直接持有「可写的第二份」导航真相；`TGNavigationStack` 只读 `state`，只通过 `dispatch` 请求变更。
 - 包本身 **不依赖** 具体 store（如 `TGReduxKit`），只依赖 `state` + `dispatch` 闭包 — 深模块、浅接口。
+- modal 的 UI chrome（关闭按钮、标题栏、拖拽指示器）由调用方通过 `modalDestination` 扩展点注入，**不**硬编码进库；关闭语义仍然走 `dispatch(.dismiss)`，不污染 reducer。
 
 ---
 
@@ -145,6 +146,7 @@ Destination 必须挂在能「看到」该 value 的层级。挂错（例如只�
 | `NavigationAction<Route>` | setPath / push / pop / popToRoot / present / dismiss | 意图 |
 | `navigationReducer` | 纯状态转移（非 MainActor） | 实现核心 |
 | `TGNavigationStack` | SwiftUI 适配：Binding 桥接 + destination | 适配器 |
+| `TGNavigationStack.modalDestination` | modal chrome 注入点（optional 闭包） | 适配器扩展点 |
 
 ### 4.1 状态形状
 
@@ -173,6 +175,7 @@ Root 不在 `path` 里：与系统 `NavigationStack` 一致 — root 是 `Naviga
 - `path` Binding：`get` 读 `state.path`；`set` → `dispatch(.setPath)`。
 - sheet / fullScreenCover：仅当 `presentationStyle` 匹配时 item 非 nil；`set` 为 nil → `dispatch(.dismiss)`。
 - `fullScreenCover` 仅在 iOS / tvOS 编译（watchOS 等无此 API）。
+- modal 渲染走 `presentedView(_:style:)`：优先用调用方提供的 `modalDestination` 包装（注入 toolbar / 关闭按钮 / 标题栏等），fallback 到 `destination(route)`。`modalDestination` 拿到的 `dismiss` 闭包是统一回写 `NavigationAction.dismiss` 的入口，调用方可先做业务副作用再调 `dismiss()`。
 
 ---
 

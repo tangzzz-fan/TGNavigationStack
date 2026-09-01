@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-09-02
+
+### Added
+- **`TGNavigationStack.modalDestination`**: new optional closure parameter that lets callers wrap modal routes with custom chrome (toolbar, title bar, dismiss button) without giving up the library's single-source-of-truth state binding.
+  - Signature: `((Route, PresentationStyle, @escaping @MainActor () -> Void) -> Destination)?`
+  - Note: Swift's `@ViewBuilder` cannot be applied to an optional closure parameter, so the closure body must be a single expression. Wrap multi-statement bodies in `Group { }` if needed.
+  - `dismiss` callback is the canonical way to close the modal from inside the wrapper; it dispatches `.dismiss` and is safe to call after side-effects.
+  - `PresentationStyle` lets callers differentiate sheet vs fullScreenCover decoration.
+  - When `nil` (default), behavior is identical to 1.1.0 — fully backward compatible.
+  - Motivation: callers (e.g. FluentWork) currently hand-roll dismiss buttons in every modal route because some pages need to fire side effects (e.g. `.endTap` before close) while others close directly. This extension point keeps side effects at the call site while removing the boilerplate.
+
+### Example
+
+```swift
+TGNavigationStack(
+    state: store.state.navigation,
+    dispatch: { store.dispatch(.navigation($0)) }
+) {
+    RootView()
+} destination: { route in
+    DestinationView(route: route)
+} modalDestination: { route, style, dismiss in
+    switch route {
+    case .speakingRoom:
+        DestinationView(route: route).toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button("关闭") {
+                    store.dispatch(.speakingRoom(.session(.endTap)))
+                    dismiss()
+                }
+            }
+        }
+    case .review:
+        DestinationView(route: route).toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button("关闭") { dismiss() }
+            }
+        }
+    default:
+        DestinationView(route: route)
+    }
+}
+```
+
 ## [1.1.0] - 2026-08-25
 
 ### Changed

@@ -81,6 +81,40 @@ TGNavigationStack(
 }
 ```
 
+## Modal chrome (optional, since 1.2.0)
+
+When you need to inject a close button, title bar, or other modal wrapper, pass the optional `modalDestination` closure. The `dismiss` callback always dispatches `NavigationAction.dismiss`; do side-effects first, then call it.
+
+Note: Swift's `@ViewBuilder` cannot be applied to an optional closure parameter, so the `modalDestination` body must be a single expression. Wrap multi-statement bodies in `Group { }` if you need view-builder DSL.
+
+```swift
+TGNavigationStack(
+    state: store.state.navigation,
+    dispatch: { store.dispatch(.navigation($0)) }
+) {
+    RootView()
+} destination: { route in
+    DestinationView(route: route)
+} modalDestination: { route, style, dismiss in
+    Group {
+        switch route {
+        case .speakingRoom:
+            DestinationView(route: route)
+                .toolbar { ToolbarItem(placement: .topBarLeading) {
+                    Button("关闭") {
+                        store.dispatch(.speakingRoom(.session(.endTap)))
+                        dismiss()
+                    }
+                } }
+        default:
+            DestinationView(route: route)
+        }
+    }
+}
+```
+
+省略 `modalDestination` 时，行为与 1.1.0 完全一致 — 同一份 `destination` 既渲染 push，也渲染 modal。
+
 ## Changelog
 
 见 [`CHANGELOG.md`](./CHANGELOG.md)。

@@ -7,17 +7,20 @@ public struct TGNavigationStack<Route: TGRoute, Root: View, Destination: View>: 
     private let dispatch: @MainActor (NavigationAction<Route>) -> Void
     private let root: () -> Root
     private let destination: (Route) -> Destination
+    private let modalDestination: ((Route, PresentationStyle, @escaping @MainActor () -> Void) -> Destination)?
 
     public init(
         state: NavigationState<Route>,
         dispatch: @escaping @MainActor (NavigationAction<Route>) -> Void,
         @ViewBuilder root: @escaping () -> Root,
-        @ViewBuilder destination: @escaping (Route) -> Destination
+        @ViewBuilder destination: @escaping (Route) -> Destination,
+        modalDestination: ((Route, PresentationStyle, @escaping @MainActor () -> Void) -> Destination)? = nil
     ) {
         self.state = state
         self.dispatch = dispatch
         self.root = root
         self.destination = destination
+        self.modalDestination = modalDestination
     }
 
     public var body: some View {
@@ -28,13 +31,24 @@ public struct TGNavigationStack<Route: TGRoute, Root: View, Destination: View>: 
                 }
         }
         .sheet(item: presentedBinding(matching: .sheet)) { route in
-            destination(route)
+            presentedView(route, style: .sheet)
         }
         #if os(iOS) || os(tvOS)
         .fullScreenCover(item: presentedBinding(matching: .fullScreenCover)) { route in
-            destination(route)
+            presentedView(route, style: .fullScreenCover)
         }
         #endif
+    }
+
+    @ViewBuilder
+    private func presentedView(_ route: Route, style: PresentationStyle) -> some View {
+        if let modalDestination {
+            modalDestination(route, style, { @MainActor in
+                dispatch(.dismiss)
+            })
+        } else {
+            destination(route)
+        }
     }
 
     private var pathBinding: Binding<[Route]> {
